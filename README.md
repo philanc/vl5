@@ -28,6 +28,14 @@ The library targets **Lua 5.3+** with the default 64-bit integers.
 ```
 syscall(syscall_no [, p2, p3, p4, p5, p6]) => r
 
+
+Example:
+
+	require "vl5"
+		
+	-- get the current user uid:  system call 102 (__NR_getuid)
+	uid = vl5.syscall(102)  -- here, uid = 1000
+	
 ```
 
 
