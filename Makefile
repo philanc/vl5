@@ -19,6 +19,9 @@ vl5.so:  vl5.c
 	$(CC) -shared $(LDFLAGS) -o vl5.so $(OBJS)
 	strip vl5.so
 
+test: vl5.so
+	lua test.lua
+
 clean:
 	rm -f *.o *.a *.so
 
