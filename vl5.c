@@ -13,11 +13,14 @@ This is for Lua 5.3+ only, built with default 64-bit integers
 
 #include <string.h>
 #include <unistd.h>
-#include <sys/syscall.h>   /* For SYS_xxx definitions */
+#include <errno.h>	// errno
+
+//~ #include <sys/syscall.h>   /* For SYS_xxx definitions */
 
 
 #define LERR(msg) return luaL_error(L, msg)
 #define RET_TRUE return (lua_pushboolean(L, 1), 1)
+#define RET_INT(i) return (lua_pushinteger(L, (i)), 1)
 
 
 #define VL5_VERSION "vl5-0.0"
@@ -96,10 +99,33 @@ static int ll_putlong(lua_State *L) {
 	char *p = (char *) luaL_checkinteger(L, 1);
 	long i = luaL_checkinteger(L, 2);
 	*((long *) p) = i;
-	return 1;
+	RET_TRUE;
+}
+
+static int ll_putint(lua_State *L) {
+	// lua API: putlong(ptr:int, i, isize)
+	// isize is i size in bytes. can be 1, 2, 4 or 8
+	char *p = (char *) luaL_checkinteger(L, 1);
+	long i = luaL_checkinteger(L, 2);
+	int sz = luaL_optinteger(L, 3, 8);
+	switch (sz) {
+		case 1: *((uint8_t *) p) = i & 0xff; break;
+		case 2: *((uint16_t *) p) = i & 0xffff; break;
+		case 4: *((uint32_t *) p) = i & 0xffffffff; break;
+		case 8: *((uint64_t *) p) = i; break;
+		default: LERR("vl5.putint: invalid parameter"); break;
+	}
+	RET_TRUE;
 }
 
 
+static int ll_errno(lua_State *L) {
+	// lua api: errno() => errno value; 
+	//          errno(n): set errno to n (main use: errno(0))
+	int r = luaL_optinteger(L, 1, -1);
+	if (r != -1) errno = r; 
+	RET_INT(errno);
+}
 
 
 
@@ -117,6 +143,7 @@ static const struct luaL_Reg vl5lib[] = {
 	{"putstrz", ll_putstrz},
 	{"getlong", ll_getlong},
 	{"putlong", ll_putlong},
+	{"putint", ll_putint},
 	//
 	{NULL, NULL},
 };

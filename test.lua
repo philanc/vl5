@@ -25,6 +25,13 @@ s = vl5.getstr(b, 16)
 i1,j1 = string.unpack("I8I8", s)
 assert(i==i1 and j==j1)
 
+i, j = 99, 1001
+vl5.putint(b, i, 1)
+vl5.putlong(b+1, j, 2)
+s = vl5.getstr(b, 16)
+i1,j1 = string.unpack("I1I2", s)
+assert(i==i1 and j==j1)
+
 b1 = vl5.newbuffer(1024)
 vl5.putstr(b1, string.pack("I8I8", i, j))
 i1 = vl5.getlong(b1)
