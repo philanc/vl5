@@ -11,22 +11,97 @@ This is for Lua 5.3+ only, built with default 64-bit integers
 #include "lua.h"
 #include "lauxlib.h"
 
+#include <string.h>
 #include <unistd.h>
 #include <sys/syscall.h>   /* For SYS_xxx definitions */
+
+
+#define LERR(msg) return luaL_error(L, msg)
+#define RET_TRUE return (lua_pushboolean(L, 1), 1)
+
 
 #define VL5_VERSION "vl5-0.0"
 
 static int ll_syscall(lua_State *L) {
 	long number = luaL_checkinteger(L, 1);
-	long p2 = luaL_optinteger(L, 2, 0);
-	long p3 = luaL_optinteger(L, 3, 0);
-	long p4 = luaL_optinteger(L, 4, 0);
-	long p5 = luaL_optinteger(L, 5, 0);
-	long p6 = luaL_optinteger(L, 6, 0);
-	long r = syscall(number, p2, p3, p4, p5, p6);
+	long p1 = luaL_optinteger(L, 2, 0);
+	long p2 = luaL_optinteger(L, 3, 0);
+	long p3 = luaL_optinteger(L, 4, 0);
+	long p4 = luaL_optinteger(L, 5, 0);
+	long p5 = luaL_optinteger(L, 6, 0);
+	long p6 = luaL_optinteger(L, 7, 0);
+	long r = syscall(number, p1, p2, p3, p4, p5, p6);
 	lua_pushinteger(L, r);
 	return 1;
 }
+
+//----------------------------------------------------------------------
+// memory / buffer API
+// ...one more step towards the perfect footgun... :-)
+
+static int ll_newbuffer(lua_State *L) {
+	// lua API: newbuffer(size) => ptr as an int
+	size_t size = luaL_checkinteger(L, 1);
+	char *mb = lua_newuserdata(L, size);
+	if (mb == NULL) LERR("buffer: allocation failed");
+	memset(mb, 0, size); // ?? is it needed or already done by lua?
+	lua_pushinteger(L, (lua_Integer) mb);
+	return 1;
+}
+
+static int ll_getstr(lua_State *L) {
+	// lua API: getstr(ptr:int [, size) => string
+	// if size=-1 (default), string is null-terminated
+	char *p = (char *) luaL_checkinteger(L, 1);
+	long size = luaL_optinteger(L, 2, -1);
+	if (size < 0) {
+		lua_pushstring (L, p);
+	} else {
+		lua_pushlstring (L, p, size);
+	}
+	return 1;
+}
+
+static int ll_putstr(lua_State *L) {
+	// lua API: putstr(ptr:int, str)
+	// NO \0 is added at the end of the written string
+	size_t len;
+	char *ptr = (char *) luaL_checkinteger(L, 1);
+	const char *str = luaL_checklstring(L, 2, &len);
+	memcpy(ptr, str, len);
+	RET_TRUE;
+}
+
+static int ll_putstrz(lua_State *L) {
+	// lua API: putstrz(ptr:int, str)
+	// a \0 is appended at the end of the copied string
+	size_t len;
+	char *ptr = (char *) luaL_checkinteger(L, 1);
+	const char *str = luaL_checklstring(L, 2, &len);
+	memcpy(ptr, str, len);
+	ptr[len] = '\0';
+	RET_TRUE;
+}
+
+static int ll_getlong(lua_State *L) {
+	// lua API: getlong(ptr:int) => int
+	char *p = (char *) luaL_checkinteger(L, 1);
+	long i = *((long *) p);
+	lua_pushinteger(L, i);
+	return 1;
+}
+
+static int ll_putlong(lua_State *L) {
+	// lua API: putlong(ptr:int, i)
+	char *p = (char *) luaL_checkinteger(L, 1);
+	long i = luaL_checkinteger(L, 2);
+	*((long *) p) = i;
+	return 1;
+}
+
+
+
+
 
 //----------------------------------------------------------------------
 // lua library declaration
@@ -36,6 +111,12 @@ static int ll_syscall(lua_State *L) {
 static const struct luaL_Reg vl5lib[] = {
 	//
 	{"syscall", ll_syscall},
+	{"newbuffer", ll_newbuffer},
+	{"getstr", ll_getstr},
+	{"putstr", ll_putstr},
+	{"putstrz", ll_putstrz},
+	{"getlong", ll_getlong},
+	{"putlong", ll_putlong},
 	//
 	{NULL, NULL},
 };

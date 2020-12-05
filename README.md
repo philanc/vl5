@@ -8,7 +8,7 @@ The library targets **Lua 5.3+** with the default 64-bit integers.
 
 - This is work in progress. No guarantee that it works or do anything remotely useful.
 
-- This is *really low-level*. It is *not* intended to be used as-is in applications. It is intended to be the *minimal* C core required to implement Lua access to Linux system calls.  In other words, this is the *perfect foot-gun*.
+- This is *really low-level*. It is *not* intended to be used as-is in applications. It is intended to be the *minimal* C core required to implement Lua access to Linux system calls.  In other words, this is the *perfect footgun*.
 
 
 - No doc at the moment.
