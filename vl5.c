@@ -6,11 +6,18 @@ VL5  - Very Low-Level Linux Lua Library (syscall interface)
 
 This is for Lua 5.3+ only, built with default 64-bit integers
 
+CAVEAT
+At the moment, this is tested and should work only for x86_64
+
+Among other things, it assumes that:
+sizeof(char *) == sizeof(long) == sizeof(lua_Integer) == 8
+
 */
 
 #include "lua.h"
 #include "lauxlib.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>	// errno
@@ -39,21 +46,32 @@ static int ll_syscall(lua_State *L) {
 }
 
 //----------------------------------------------------------------------
-// memory / buffer API
-// ...one more step towards the perfect footgun... :-)
+// memory / buffer minimal API
+// ...one big step towards the perfect footgun... :-)
+
+// FIXME: how to use a userdata automatically GC'd by Lua for buffer?
 
 static int ll_newbuffer(lua_State *L) {
-	// lua API: newbuffer(size) => ptr as an int
+	// lua API: newbuffer(size) => addr
+	// return the address of a block of allocated memory
 	size_t size = luaL_checkinteger(L, 1);
-	char *mb = lua_newuserdata(L, size);
+	char *mb = (char *) malloc(size);
 	if (mb == NULL) LERR("buffer: allocation failed");
 	memset(mb, 0, size); // ?? is it needed or already done by lua?
 	lua_pushinteger(L, (lua_Integer) mb);
 	return 1;
 }
 
+static int ll_freebuffer(lua_State *L) {
+	// lua API: freebuffer(addr)
+	// free a buffer allocated with newbuffer()
+	char *p = (char *) luaL_checkinteger(L, 1);
+	free(p);
+	RET_TRUE;
+}
+
 static int ll_getstr(lua_State *L) {
-	// lua API: getstr(ptr:int [, size) => string
+	// lua API: getstr(addr [, size]) => string
 	// if size=-1 (default), string is null-terminated
 	char *p = (char *) luaL_checkinteger(L, 1);
 	long size = luaL_optinteger(L, 2, -1);
@@ -66,48 +84,43 @@ static int ll_getstr(lua_State *L) {
 }
 
 static int ll_putstr(lua_State *L) {
-	// lua API: putstr(ptr:int, str)
-	// NO \0 is added at the end of the written string
+	// lua API: putstr(addr, str [, nt])
+	// nt is optional. if true, a null terminator ('\0')
+	// is appended at the end of the written string. Default is false.
 	size_t len;
 	char *ptr = (char *) luaL_checkinteger(L, 1);
 	const char *str = luaL_checklstring(L, 2, &len);
 	memcpy(ptr, str, len);
+	if (lua_toboolean(L, 3)) ptr[len] = '\0';
 	RET_TRUE;
 }
 
-static int ll_putstrz(lua_State *L) {
-	// lua API: putstrz(ptr:int, str)
-	// a \0 is appended at the end of the copied string
-	size_t len;
-	char *ptr = (char *) luaL_checkinteger(L, 1);
-	const char *str = luaL_checklstring(L, 2, &len);
-	memcpy(ptr, str, len);
-	ptr[len] = '\0';
-	RET_TRUE;
-}
-
-static int ll_getlong(lua_State *L) {
-	// lua API: getlong(ptr:int) => int
-	char *p = (char *) luaL_checkinteger(L, 1);
-	long i = *((long *) p);
-	lua_pushinteger(L, i);
-	return 1;
-}
-
-static int ll_putlong(lua_State *L) {
-	// lua API: putlong(ptr:int, i)
-	char *p = (char *) luaL_checkinteger(L, 1);
-	long i = luaL_checkinteger(L, 2);
-	*((long *) p) = i;
-	RET_TRUE;
-}
-
-static int ll_putint(lua_State *L) {
-	// lua API: putlong(ptr:int, i, isize)
+static int ll_getuint(lua_State *L) {
+	// lua API: getuint(addr, isize) => i
+	// get unsigned integer i at address addr
 	// isize is i size in bytes. can be 1, 2, 4 or 8
+	// default is 4 
+	char *p = (char *) luaL_checkinteger(L, 1);
+	int sz = luaL_optinteger(L, 2, 4);
+	long i;
+	switch (sz) {
+		case 1: i = *((uint8_t *) p); break;
+		case 2: i = *((uint16_t *) p); break;
+		case 4: i = *((uint32_t *) p); break;
+		case 8: i = *((uint64_t *) p); break;
+		default: LERR("vl5.getint: invalid parameter"); break;
+	}
+	RET_INT(i);
+}
+
+static int ll_putuint(lua_State *L) {
+	// lua API: putuint(addr, i, isize)
+	// put integer i at address addr.
+	// isize is i size in bytes. can be 1, 2, 4 or 8
+	// default is 4 
 	char *p = (char *) luaL_checkinteger(L, 1);
 	long i = luaL_checkinteger(L, 2);
-	int sz = luaL_optinteger(L, 3, 8);
+	int sz = luaL_optinteger(L, 3, 4);
 	switch (sz) {
 		case 1: *((uint8_t *) p) = i & 0xff; break;
 		case 2: *((uint16_t *) p) = i & 0xffff; break;
@@ -118,10 +131,11 @@ static int ll_putint(lua_State *L) {
 	RET_TRUE;
 }
 
+// access to the errno global variable
 
 static int ll_errno(lua_State *L) {
-	// lua api: errno() => errno value; 
-	//          errno(n): set errno to n (main use: errno(0))
+	// lua api: errno() => errno value
+	//          errno(n): set errno to n
 	int r = luaL_optinteger(L, 1, -1);
 	if (r != -1) errno = r; 
 	RET_INT(errno);
@@ -138,12 +152,11 @@ static const struct luaL_Reg vl5lib[] = {
 	//
 	{"syscall", ll_syscall},
 	{"newbuffer", ll_newbuffer},
+	{"freebuffer", ll_freebuffer},
 	{"getstr", ll_getstr},
 	{"putstr", ll_putstr},
-	{"putstrz", ll_putstrz},
-	{"getlong", ll_getlong},
-	{"putlong", ll_putlong},
-	{"putint", ll_putint},
+	{"getuint", ll_getuint},
+	{"putuint", ll_putuint},
 	//
 	{NULL, NULL},
 };

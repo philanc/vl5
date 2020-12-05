@@ -19,28 +19,33 @@ local b, b1, i, j, i1, j1, r, s
 
 b = vl5.newbuffer(1024)
 i, j = 123456, 789
-vl5.putlong(b, i)
-vl5.putlong(b+8, j)
+vl5.putuint(b, i, 8)
+vl5.putuint(b+8, j, 8)
 s = vl5.getstr(b, 16)
 i1,j1 = string.unpack("I8I8", s)
 assert(i==i1 and j==j1)
 
 i, j = 99, 1001
-vl5.putint(b, i, 1)
-vl5.putlong(b+1, j, 2)
+vl5.putuint(b, i, 1)
+vl5.putuint(b+1, j, 2)
 s = vl5.getstr(b, 16)
 i1,j1 = string.unpack("I1I2", s)
 assert(i==i1 and j==j1)
 
 b1 = vl5.newbuffer(1024)
 vl5.putstr(b1, string.pack("I8I8", i, j))
-i1 = vl5.getlong(b1)
-j1 = vl5.getlong(b1+8)
+i1 = vl5.getuint(b1, 8)
+j1 = vl5.getuint(b1+8, 8)
 assert(i==i1 and j==j1)
 
 r = vl5.syscall(nr.getcwd, b, 1000)
 s = vl5.getstr(b)
 print("getcwd: " .. s)
+
+vl5.freebuffer(b)
+vl5.freebuffer(b1)
+
+--~ vl5.freebuffer(10000)
 
 ------------------------------------------------------------------------
 print(vl5.VERSION, "ok.")
