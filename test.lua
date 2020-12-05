@@ -45,8 +45,6 @@ print("getcwd: " .. s)
 vl5.freebuffer(b)
 vl5.freebuffer(b1)
 
---~ vl5.freebuffer(10000)
-
 ------------------------------------------------------------------------
 print(vl5.VERSION, "ok.")
 
