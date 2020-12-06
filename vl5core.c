@@ -28,7 +28,7 @@ sizeof(char *) == sizeof(long) == sizeof(lua_Integer) == 8
 #define LERR(msg) return luaL_error(L, msg)
 #define RET_TRUE return (lua_pushboolean(L, 1), 1)
 #define RET_INT(i) return (lua_pushinteger(L, (i)), 1)
-
+#define RET_ERRNO return (lua_pushnil(L), lua_pushinteger(L, errno), 2)
 
 #define VL5_VERSION "vl5-0.0"
 
@@ -41,6 +41,7 @@ static int ll_syscall(lua_State *L) {
 	long p5 = luaL_optinteger(L, 6, 0);
 	long p6 = luaL_optinteger(L, 7, 0);
 	long r = syscall(number, p1, p2, p3, p4, p5, p6);
+	if (r == -1) RET_ERRNO;  // return nil, errno
 	lua_pushinteger(L, r);
 	return 1;
 }
@@ -157,6 +158,8 @@ static const struct luaL_Reg vl5lib[] = {
 	{"putstr", ll_putstr},
 	{"getuint", ll_getuint},
 	{"putuint", ll_putuint},
+	{"errno", ll_errno},
+	
 	//
 	{NULL, NULL},
 };
