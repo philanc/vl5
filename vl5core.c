@@ -161,7 +161,7 @@ static const struct luaL_Reg vl5lib[] = {
 	{NULL, NULL},
 };
 
-int luaopen_vl5 (lua_State *L) {
+int luaopen_vl5core (lua_State *L) {
 	
 	// register main library functions
 	//~ luaL_register (L, "l5", l5lib);
@@ -171,3 +171,4 @@ int luaopen_vl5 (lua_State *L) {
 	lua_settable (L, -3);
 	return 1;
 }
+

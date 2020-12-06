@@ -12,14 +12,14 @@ AR= ar
 CFLAGS= -Os -fPIC $(INCFLAGS) 
 LDFLAGS= -fPIC
 
-OBJS= vl5.o
+OBJS= vl5core.o
 
-vl5.so:  vl5.c
-	$(CC) -c $(CFLAGS) vl5.c
-	$(CC) -shared $(LDFLAGS) -o vl5.so $(OBJS)
-	strip vl5.so
+vl5.so:  vl5core.c
+	$(CC) -c $(CFLAGS) vl5core.c
+	$(CC) -shared $(LDFLAGS) -o vl5core.so $(OBJS)
+	strip vl5core.so
 
-test: vl5.so
+test: vl5core.so
 	lua test.lua
 
 clean:
