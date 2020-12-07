@@ -132,7 +132,7 @@ static int ll_putuint(lua_State *L) {
 	RET_TRUE;
 }
 
-// access to the errno global variable
+// access to  global variables
 
 static int ll_errno(lua_State *L) {
 	// lua api: errno() => errno value
@@ -141,6 +141,14 @@ static int ll_errno(lua_State *L) {
 	if (r != -1) errno = r; 
 	RET_INT(errno);
 }
+
+static int ll_environ(lua_State *L) {
+	// lua api: environ() => 'environ' value as a Lua integer 
+	// (the address of a list of strings "name=value")
+	extern char **environ;
+	RET_INT( (lua_Integer) environ );
+}
+
 
 
 
@@ -159,6 +167,7 @@ static const struct luaL_Reg vl5lib[] = {
 	{"getuint", ll_getuint},
 	{"putuint", ll_putuint},
 	{"errno", ll_errno},
+	{"environ", ll_environ},
 	
 	//
 	{NULL, NULL},
