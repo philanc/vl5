@@ -94,6 +94,39 @@ environ() => addr
 
 ```
 
+An example:
+
+```
+	vl5 = require "vl5"
+	nr = require "vl5.nr"
+	
+	-- change the current directory to /var/log
+	
+	-- allocate a 128 bytes buffer
+	-- buf is the memory address of the buffer (as a Lua integer)
+	
+	buf = vl5.newbuffer(128)  
+	
+	-- write the path to the buffer (as a null-terminated string)
+	
+	vl5.putstr(buf, "/var/log", true) 
+	
+	-- invoke the system call
+	
+	r, eno = vl5.syscall(nr.chdir, buf)
+	
+	-- if the system call fails (eg. if the path is invalid)
+	-- `r` is nil and `eno` is the errno value set by the system call.
+	
+	-- if the buffer is not used anymore for other syscalls, 
+	-- it may be deallocated.
+
+	vl5.freebuffer(buf)
+	
+```
+	
+
+
 
 
 
