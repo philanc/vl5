@@ -3,7 +3,7 @@
 local vl5 = require "vl5"
 local syscall = vl5.syscall
 
-local nr = require "syscall_nr"
+local nr = require "vl5.nr"
 
 
 
