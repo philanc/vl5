@@ -10,6 +10,7 @@ The library targets **Lua 5.3+** with the default 64-bit integers.
 
 - This is *really low-level*. It is *not* intended to be used as-is in applications. It is intended to be the *minimal* C core required to implement Lua access to Linux system calls.  In other words, this is the *perfect footgun*.
 
+- This is obviously *very architecture dependant*. The code, examples and tests are written for x86_64.
 
 - No doc at the moment.
 
@@ -94,7 +95,7 @@ environ() => addr
 
 ```
 
-An example:
+An example: Change the current directory
 
 ```
 	vl5 = require "vl5"
