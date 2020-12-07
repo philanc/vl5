@@ -83,12 +83,10 @@ putuint(addr, i, isize)
 	   putstr(addr, string.format("I2", i & 0xffff))
 
 errno([n]) => eno
-
 	Return the value of the global `errno` variable.
 	If `n` is provided, the global variable `errno` is set to `n`.
 
 environ() => addr
-
 	Return the address of the current environment (ie. the value of 
 	the C global variable `environ`) as an integer
 
