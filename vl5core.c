@@ -71,6 +71,15 @@ static int ll_freebuffer(lua_State *L) {
 	RET_TRUE;
 }
 
+static int ll_zero(lua_State *L) {
+	// lua API: zero(addr, size)
+	// write `size` null bytes at address `addr`
+	char *p = (char *) luaL_checkinteger(L, 1);
+	size_t n =  luaL_checkinteger(L, 2);
+	memset(p, 0, n);
+	RET_TRUE;
+}
+
 static int ll_getstr(lua_State *L) {
 	// lua API: getstr(addr [, size]) => string
 	// if size=-1 (default), string is null-terminated
@@ -160,13 +169,13 @@ static const struct luaL_Reg vl5lib[] = {
 	{"syscall", ll_syscall},
 	{"newbuffer", ll_newbuffer},
 	{"freebuffer", ll_freebuffer},
+	{"zero", ll_zero},
 	{"getstr", ll_getstr},
 	{"putstr", ll_putstr},
 	{"getuint", ll_getuint},
 	{"putuint", ll_putuint},
 	{"errno", ll_errno},
 	{"environ", ll_environ},
-	
 	//
 	{NULL, NULL},
 };

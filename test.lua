@@ -38,6 +38,10 @@ i1 = vl5.getuint(b1, 8)
 j1 = vl5.getuint(b1+8, 8)
 assert(i==i1 and j==j1)
 
+vl5.putstr(b, "AAAAAAAAAA")
+vl5.zero(b, 100)
+assert(vl5.getstr(b, 100) == string.rep('\0', 100))
+
 r = vl5.syscall(nr.getcwd, b, 1000)
 s = vl5.getstr(b)
 print("getcwd: " .. s)

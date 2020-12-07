@@ -60,6 +60,9 @@ newbuffer(size) => addr
 freebuffer(addr)
 	free a buffer allocated at this address
 
+zero(addr, size)
+	write `size` null bytes at address `addr`
+
 getstr(addr [, size]) => str
 	return `size` bytes at address `addr` as a Lua string
 	if size is not provided, the null-terminated string at
