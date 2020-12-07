@@ -100,9 +100,8 @@ static int ll_getuint(lua_State *L) {
 	// lua API: getuint(addr, isize) => i
 	// get unsigned integer i at address addr
 	// isize is i size in bytes. can be 1, 2, 4 or 8
-	// default is 4 
 	char *p = (char *) luaL_checkinteger(L, 1);
-	int sz = luaL_optinteger(L, 2, 4);
+	int sz = luaL_checkinteger(L, 2);
 	long i;
 	switch (sz) {
 		case 1: i = *((uint8_t *) p); break;
@@ -118,10 +117,9 @@ static int ll_putuint(lua_State *L) {
 	// lua API: putuint(addr, i, isize)
 	// put integer i at address addr.
 	// isize is i size in bytes. can be 1, 2, 4 or 8
-	// default is 4 
 	char *p = (char *) luaL_checkinteger(L, 1);
 	long i = luaL_checkinteger(L, 2);
-	int sz = luaL_optinteger(L, 3, 4);
+	int sz = luaL_checkinteger(L, 3);
 	switch (sz) {
 		case 1: *((uint8_t *) p) = i & 0xff; break;
 		case 2: *((uint16_t *) p) = i & 0xffff; break;
