@@ -80,7 +80,7 @@ putuint(addr, i, isize)
 	the integer is truncated if needed. For example,
 	   putuint(addr, i, 2) 
 	is equivalent to
-	   putstr(addr, string.format("I2", i & 0xffff))
+	   putstr(addr, string.pack("I2", i & 0xffff))
 
 errno([n]) => eno
 	Return the value of the global `errno` variable.
