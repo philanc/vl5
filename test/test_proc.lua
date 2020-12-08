@@ -1,17 +1,6 @@
 
 local proc = require "vl5.proc"
 
---~ print(proc.getpid())
---~ print(proc.getppid())
---~ print(proc.getcwd())
---~ print(proc.chdir("test"))
---~ print(os.time())
---~ print(proc.msleep(2000))
---~ print(os.time())
---~ print(proc.getcwd())
-
-l5=require"l5"
-
 function test_chdir()
 	-- test chdir, getcwd
 	local path, here, eno
