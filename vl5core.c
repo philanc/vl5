@@ -30,7 +30,7 @@ sizeof(char *) == sizeof(long) == sizeof(lua_Integer) == 8
 #define RET_INT(i) return (lua_pushinteger(L, (i)), 1)
 #define RET_ERRNO return (lua_pushnil(L), lua_pushinteger(L, errno), 2)
 
-#define VL5_VERSION "vl5-0.0"
+#define VL5_VERSION "vl5-0.1"
 
 static int ll_syscall(lua_State *L) {
 	long number = luaL_checkinteger(L, 1);
