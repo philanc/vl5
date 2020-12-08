@@ -138,10 +138,7 @@ An example: Change the current directory
 	
 ```
 
-
-
-
-
+**More examples** can be found in `vl5` and `test` directories. `vl5` contains various Lua functions wrapping Linux system calls, and `test` contains minimal tests for these functions. 
 
 
 
