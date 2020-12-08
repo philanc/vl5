@@ -5,7 +5,9 @@
 
 vl5.proc  
 
-this is implemented and tested only on x86_64
+caveats:
+** this is implemented for and tested only on x86_64. **
+** this doesn't support multi-threaded programs. **
 
 
 ]]
@@ -44,11 +46,57 @@ end
 function proc.msleep(ms)
 	-- suspend the execution for ms milliseconds
 	--
-	-- argument is a stuct timespec {tv_sec, tv_nsec: long}
+	-- built with nanosleep(2)
+	-- argument is a stuct timespec {tv_sec:long, tv_nsec:long}
+	-- Note: the nanosleep optional argument (remaining time in case 
+	-- of interruption) is not used/returned. 
 	puti(b, ms // 1000, 8) -- seconds
 	puti(b+8, (ms % 1000) * 1000000, 8) -- nanoseconds
 	return syscall(nr.nanosleep, b)
 end
 
+function proc.kill(pid, sig)
+	-- see kill(2)
+	return syscall(nr.kill, pid, sig)
+end
+
+function proc.fork()
+	-- !! doesn't support multithreading !!
+	return syscall(nr.fork)
+end
+
+function proc.waitpid(pid, opt)
+	-- wait for state changes in a child process (see waitpid(2))
+	-- return pid, status
+	-- pid, opt and status are integers
+	-- (for status consts and macros, see sys/wait.h)
+	--	exitstatus: (status & 0xff00) >> 8
+	--	termsig: status & 0x7f
+	--	coredump: status & 0x80
+	-- pid and opt are optional:
+	-- pid default value is -1 (wait for any child - same as wait())
+	-- pid=0: wait for any child in same process group
+	-- pid=123: wait for child with pid 123
+	-- opt=1 (WNOHANG) => return immediately if no child has exited.
+	-- default is opt=0
+	--
+	-- !! doesn't support multithreading !!
+	--
+	pid = pid or -1
+	opt = opt or 0
+	local pid, status, eno
+	pid, eno = syscall(nr.wait4, pid, b, opt)
+	if pid then
+		status = geti(b, 4)
+		return pid, status
+	else
+		return nil, eno
+	end
+end
+
+
+
+
+------------------------------------------------------------------------
 return proc
 
