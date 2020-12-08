@@ -102,7 +102,7 @@ static int ll_putstr(lua_State *L) {
 	const char *str = luaL_checklstring(L, 2, &len);
 	memcpy(ptr, str, len);
 	if (lua_toboolean(L, 3)) ptr[len] = '\0';
-	RET_TRUE;
+	RET_INT( (lua_Integer) ptr );
 }
 
 static int ll_getuint(lua_State *L) {
@@ -136,7 +136,7 @@ static int ll_putuint(lua_State *L) {
 		case 8: *((uint64_t *) p) = i; break;
 		default: LERR("vl5.putint: invalid parameter"); break;
 	}
-	RET_TRUE;
+	RET_INT( (lua_Integer) p );
 }
 
 // access to  global variables

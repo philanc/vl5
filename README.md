@@ -65,10 +65,10 @@ zero(addr, size)
 
 getstr(addr [, size]) => str
 	return `size` bytes at address `addr` as a Lua string
-	if size is not provided, the null-terminated string at
-	address `addr` is returned.
+	if size is not provided, the null-terminated string
+	at address `addr` is returned.
 
-putstr(addr, str [, zflag])
+putstr(addr, str [, zflag]) => addr
 	write string `str` at address `addr`.
 	if `zflag` is true, a zero byte ('\0') is appended in memory
 	after the string
@@ -77,7 +77,7 @@ getuint(addr, isize) => i
 	read an unsigned integer in memory at address `addr`. `isize` is the
 	size of the integer in memory (in bytes). It must be 1, 2, 4 or 8.
 
-putuint(addr, i, isize)
+putuint(addr, i, isize) => addr
 	writes an integer in memory at address `addr`. `isize` is the 
 	size of the integer in bytes. It must be 1, 2, 4 or 8.
 	the integer is truncated if needed. For example,
