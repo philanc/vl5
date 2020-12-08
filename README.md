@@ -17,11 +17,11 @@ The library targets **Lua 5.3+** with the default 64-bit integers.
 
 ### What's the point?
 
-- this is fun (it somehow reminds me of programming with int 21h, int 10h and friends in old DOS days)
+- This is fun (it somehow reminds me of programming with int 21h, int 10h and friends in old DOS days).
 
-- this is a great learning experience -- a good way to learn about the raw Linux kernel interface
+- This is a great learning experience - a good way to learn about the raw Linux kernel interface.
 
-- this is the first step to build a minimal Linux userspace (almost) entirely in Lua.
+- This is the first step to build a minimal Linux userspace (almost) entirely in Lua.
 
 
 ### Available functions
