@@ -98,7 +98,7 @@ environ() => addr
 
 An example: Change the current directory
 
-```
+```lua
 	vl5 = require "vl5"
 	nr = require "vl5.nr"
 	
@@ -120,13 +120,24 @@ An example: Change the current directory
 	-- if the system call fails (eg. if the path is invalid)
 	-- `r` is nil and `eno` is the errno value set by the system call.
 	
-	-- if the buffer is not used anymore for other syscalls, 
+	
+	-- now, get the current directory. The buffer can be reused:
+	
+	r, eno = vl5.syscall(nr.getcwd, buf)
+	
+	-- the curent directory path has been written 
+	-- as a null-terminated string to address `buf`.  Get the string:
+	
+	curdir = vl5.getstr(buf) 
+	assert(curdir == "/var/log")
+	
+	-- if the buffer is not used for other syscalls, 
 	-- it may be deallocated.
 
 	vl5.freebuffer(buf)
 	
 ```
-	
+
 
 
 
