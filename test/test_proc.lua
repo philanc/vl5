@@ -1,5 +1,8 @@
 local vl5 = require "vl5"
 local proc = require "vl5.proc"
+local util = require "vl5.util"
+
+------------------------------------------------------------------------
 
 function test_chdir()
 	-- test chdir, getcwd
@@ -79,6 +82,27 @@ local function test_csl()
 	for k, v in pairs(r) do assert(sl[k] == r[k]) end
 end
 
---~ test_chdir()
---~ test_fork()
+local function test_execve()
+	local r, eno
+	if assert(proc.fork()) == 0 then --child
+		r, eno = proc.execve("/bin/sh"
+		   , { "/bin/sh", "-c", "env >zzexecve 2>&1", } --argv
+		   , {AAA="AAAVALUE", ZZZ="ZZZVALUE"} --env
+		   )
+		assert(r, eno) -- executed only if execve failed
+	else -- parent
+		assert(proc.waitpid())
+		local env = assert(util.fget("zzexecve")
+			, "'env' redirection error"
+			)
+		r = env:find("AAA=AAAVALUE\n") and env:find("ZZZ=ZZZVALUE\n")
+		os.remove("zzexecve")
+		assert(r, "environment content error")
+	end
+	print("test_execve: ok.")
+end
+
+test_chdir()
+test_fork()
 test_csl()
+test_execve()

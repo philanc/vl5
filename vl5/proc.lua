@@ -121,7 +121,8 @@ function proc.make_csl(a, alen, t)
 	-- the csl must fit between a and a+alen. if not, the 
 	-- function returns nil, errmsg
 	-- strings are taken for the list part of Lua table t.
-	-- return a on success or nil, errmsg
+	-- return a, len on success or nil, errmsg. len is the actual 
+	-- length of the csl in memory
 	--
 	local psz = 8 -- size of a pointer
 	local len = (#t + 1) * psz  -- space used for the string pointers
@@ -136,7 +137,7 @@ function proc.make_csl(a, alen, t)
 		puti(pa, sa, psz)
 		pa = pa + psz
 	end
-	return a
+	return a, len
 end
 
 function proc.parse_csl(a)
@@ -154,15 +155,74 @@ function proc.parse_csl(a)
 	end
 	return t
 end
-	
+
+function proc.csl_size(t)
+	-- return the memory size required to store a list 
+	-- of strings (a lua table) as a csl
+	-- (this is the total size of strings, plus pointers 
+	-- and null terminators)
+	local psz = 8 -- size of a pointer
+	local len = (#t + 1) * psz  -- space used for the string pointers	
+	for i, s in ipairs(t) do
+		len = len + #s + 1 -- +1 for null terminator
+	end
+	return len
+end
 	
 
-function proc.execve(exepath, argv_csl, env_csl)
+function proc.execve_raw(exepath, argv_addr, env_addr)
 	-- Return nil, eno (the errno value set by the system call)
 	-- This function does not return on success.
-	
-	
+	-- argv_addr is the address of the argument list (as a csl).
+	-- env_addr is the address of the environment (as a csl)
+	return syscall(nr.execve, puts(b, exepath), argv_addr, env_addr)
 end
+
+function proc.execve(exepath, argv, env)
+	-- this is a convenience function wrapping execve_raw()
+	-- argv is a lua list of string. First element should be 
+	-- the program path
+	-- env is a lua table {name:string = value:string, ...}
+	-- a buffer is allocated and the csl are built before execve
+	-- if env is nil, the current environment is used
+	-- if argv is nil, a list with only the program path is used.
+	-- Return nil, eno (the errno value set by the system call)
+	-- This function does not return on success.
+	--
+	local r, eno, errmsg
+	local argv_addr, env_addr
+	local argv_len, env_len
+	-- prepare argv
+	argv = argv or {exepath}
+	argv_len = proc.csl_size(argv)
+	argv_addr = assert(vl5.newbuffer(argv_len))
+	assert(proc.make_csl(argv_addr, argv_len, argv))
+	-- prepare env
+	if env then
+		-- create a list of "name=value" strings
+		envl = {}
+		for name, value in pairs(env) do
+			table.insert(envl, 
+				tostring(name) .. "=" .. tostring(value))
+		end
+		-- create the env csl
+		env_len = proc.csl_size(envl)
+		env_addr = assert(vl5.newbuffer(env_len))
+		assert(proc.make_csl(env_addr, env_len, envl))
+		
+	else    -- env is nil: use the current environment
+		env_addr = vl5.environ()
+	end
+	-- call execve
+	r, eno = proc.execve_raw(exepath, argv_addr, env_addr)
+	-- here, execve has failed
+	-- deallocate buffers as needed
+	vl5.freebuffer(argv_addr)
+	if not env then vl5.freebuffer(env_addr) end
+	return r, eno
+end
+	
+	
 
 ------------------------------------------------------------------------
 return proc
