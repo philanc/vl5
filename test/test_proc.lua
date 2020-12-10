@@ -1,4 +1,4 @@
-
+local vl5 = require "vl5"
 local proc = require "vl5.proc"
 
 function test_chdir()
@@ -64,6 +64,21 @@ function test_fork()
 	print("test_fork: ok.")
 end
 
-test_chdir()
-test_fork()
+local function test_csl()
+	-- test make_csl() and parse_csl()
+	local b, blen = vl5.buf, vl5.bufsize
+	local sl = {"abc", "", "defg", "", string.rep('A', 1000)}
+	local b1, em = proc.make_csl(b, blen, sl)
+	assert(b1, em)
+	c = vl5.getstr(b, 100)
+	-- test parse_csl()
+	r, em = proc.parse_csl(b, blen, sl)
+	assert(r, em)
+	-- assert r eq sl
+	for k, v in pairs(sl) do assert(sl[k] == r[k]) end
+	for k, v in pairs(r) do assert(sl[k] == r[k]) end
+end
 
+--~ test_chdir()
+--~ test_fork()
+test_csl()

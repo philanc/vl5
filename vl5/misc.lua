@@ -25,6 +25,64 @@ local b, blen = vl5.buf, vl5.bufsize
 
 local misc = {} -- the vl5.misc module
 
+------------------------------------------------------------------------
+-- time-related syscalls
+
+--- time(2)
+
+function misc.time()
+	-- return the number of seconds since the Unix epoch
+	-- should be ~ the same as Lua os.time()
+	return syscall(nr.time)
+end
+
+
+--- clock_getres(2), clock_gettime(2) -- constants from time.h
+
+misc.CLOCK_REALTIME = 0
+misc.CLOCK_MONOTONIC = 1
+misc.CLOCK_MONOTONIC_RAW = 4
+
+function misc.clock_getres(clockid)
+	-- system call writes a stuct timespec {tv_sec:long, tv_nsec:long}
+	-- in buffer b
+	local r, eno = syscall(nr.clock_getres, clockid, b)
+	if not r then return nil, eno end
+	return geti(b, 8), geti(b+8, 8)
+end
+	
+function misc.clock_gettime(clockid)
+	-- system call writes a stuct timespec {tv_sec:long, tv_nsec:long}
+	-- in buffer b
+	local r, eno = syscall(nr.clock_gettime, clockid, b)
+	if not r then return nil, eno end
+	return geti(b, 8), geti(b+8, 8)
+end
+
+-- utility functions based on clock_gettime(CLOCK_REALTIME is 0)
+
+function misc.time_msec()
+	-- same as os.time, but return time in milliseconds
+	-- (number of milliseconds since the Unix epoch)
+	local r, eno = syscall(nr.clock_gettime, 0, b)
+	if not r then return nil, eno end
+	local s, ns = geti(b, 8), geti(b+8, 8)
+	return s * 1000 + ns // 1000000
+end
+	
+function misc.time_usec()
+	-- same as os.time, but return time in microseconds
+	-- (number of microseconds since the Unix epoch)
+	local r, eno = syscall(nr.clock_gettime, 0, b)
+	if not r then return nil, eno end
+	local s, ns = geti(b, 8), geti(b+8, 8)
+	return s * 1000000 + ns // 1000
+end
+	
+
+
+--
+
 --[[ uname(2)  
 
 the uname syscall returns system  information  in the following structure

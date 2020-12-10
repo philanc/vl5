@@ -94,8 +94,75 @@ function proc.waitpid(pid, opt)
 	end
 end
 
+------------------------------------------------------------------------
+-- execve
 
 
+-- utilities to convert between a Lua list of string and a list of
+-- C strings as used for example by `argv` and `environ` ("csl")
+
+--[[ a C string list is stored in a buffer as follows:
+
+starting at address b:
+	addr of string1 (a char *)
+	addr of string2
+	...
+	addr of stringN
+	0  (a null ptr)
+	string1 \0 (a null byte must be  appended at end of string)
+	string2 \0
+	... 
+	stringN \0
+	
+]]
+
+function proc.make_csl(a, alen, t)
+	-- create a C string list (csl) in memory at address a.
+	-- the csl must fit between a and a+alen. if not, the 
+	-- function returns nil, errmsg
+	-- strings are taken for the list part of Lua table t.
+	-- return a on success or nil, errmsg
+	--
+	local psz = 8 -- size of a pointer
+	local len = (#t + 1) * psz  -- space used for the string pointers
+	-- store the strings and check the total length of the future csl
+	local pa = a -- address of the pointer to the first string
+	for i, s in ipairs(t) do
+		assert(type(s) == "string")
+		sa = a + len -- -- address of the first string chars
+		len = len + #s + 1  -- add 1 for the '\0' terminator
+		if len > alen then return nil, "not enough space" end
+		puts(sa, s, true) -- write s, add a '\0'
+		puti(pa, sa, psz)
+		pa = pa + psz
+	end
+	return a
+end
+
+function proc.parse_csl(a)
+	-- parse a C string list (csl) at address a
+	-- return a Lua table containing the list of strings
+	--
+	local psz = 8 -- size of a pointer
+	local t = {}  -- the Lua table to be filled by strings
+	while true do
+		local sa = geti(a, psz)
+		if sa == 0 then break end
+		local s = gets(sa)
+		table.insert(t, s)
+		a = a + psz
+	end
+	return t
+end
+	
+	
+
+function proc.execve(exepath, argv_csl, env_csl)
+	-- Return nil, eno (the errno value set by the system call)
+	-- This function does not return on success.
+	
+	
+end
 
 ------------------------------------------------------------------------
 return proc
