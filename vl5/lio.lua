@@ -113,6 +113,14 @@ function lio.dup2(oldfd, newfd)
 	return r, eno
 end
 
+function lio.pipe2(flags)
+	local r, eno = syscall(nr.pipe2, b, flags)
+	if not r then return nil, eno end
+	local intsz = 4
+	local p0, p1 = geti(b, intsz), geti(b+intsz, intsz)
+	return p0, p1
+end
+
 ------------------------------------------------------------------------
 return lio
 
