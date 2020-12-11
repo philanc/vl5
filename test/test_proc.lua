@@ -14,7 +14,6 @@ function test_chdir()
 	-- return to initial dir
 	assert(proc.chdir(here))
 	assert(proc.getcwd() == here)
-	print("test_chdir: ok.")
 end
 
 function test_fork()	
@@ -64,7 +63,6 @@ function test_fork()
 		-- child has been sent signal 15 so:
 		assert(exit==0 and sig==15 and core==0)
 	end
-	print("test_fork: ok.")
 end
 
 local function test_csl()
@@ -99,10 +97,11 @@ local function test_execve()
 		os.remove("zzexecve")
 		assert(r, "environment content error")
 	end
-	print("test_execve: ok.")
 end
 
 test_chdir()
 test_fork()
 test_csl()
 test_execve()
+
+print("test_proc: ok.")
