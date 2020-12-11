@@ -76,42 +76,30 @@ function lio.close(fd)
 	return syscall(nr.close)
 end
 
-function lio.read(fd, count)
-	assert(count <= blen, "count too large for buffer")
-	local r, eno = syscall(nr.read, fd, b, count)
-	if not r then return nil, eno end
-	local s = gets(b, r)
-	return s
-end
-
-function lio.readbuf(fd, buf, buflen)
-	-- read at most `buflen` bytes using buffer at address `buf`
-	-- buf, buflen default to vl5.buf
+function lio.read(fd, count, buf, buflen)
+	-- read at most `count` bytes from fd, using buffer `buf`
+	-- return read bytes as a string, or nil, errno
+	-- buf, buflen  default to vl5.buf, vl4.bufsize
+	-- count defaults to buflen
 	buf = buf or vl5.buf
 	buflen = buflen or vl5.bufsize
-	local r, eno = syscall(nr.read, fd, buf, buflen)
+	count = count or buflen
+	assert(count <= buflen)
+	local r, eno = syscall(nr.read, fd, buf, count)
 	if not r then return nil, eno end
-	local s = gets(b, r)
+	local s = gets(buf, r)
 	return s
 end
 
-function lio.write(fd, s)
-	assert(#s <= blen, "string too large for buffer")
+function lio.write(fd, s, buf, buflen)
+	-- write string s to fd, using buffer `buf`
+	-- returns the number of written bytes, or nil, errno
+	-- buf, buflen  default to vl5.buf, vl4.bufsize
+	buf = buf or vl5.buf
+	buflen = buflen or vl5.bufsize
+	assert(#s <= buflen, "string too large for buffer")
 	puts(b, s)
-	return syscall(nr.write, fd, b, #s)
-end
-
-function lio.writebuf(fd, s, idx, buf, buflen)
-	-- write a slice of string s at index idx of at most buflen bytes
-	-- using buffer buf.
-	-- buf, buflen default to vl5.buf
-	-- 
-	idx = idx or 1
-	buf = buf or vl5.buf
-	buflen = buflen or vl5.bufsize
-	local s1 = s:sub(idx, idx + buflen -1)
-	puts(buf, s1)
-	return syscall(nr.write, fd, buf, #s1)
+	return syscall(nr.write, fd, buf, #s)
 end
 
 

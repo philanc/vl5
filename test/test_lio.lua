@@ -21,16 +21,14 @@ local function test_file()
 	assert(not fd2 and eno == 17) -- 17=EEXIST
 --~ 	print("fd = " .. fd)
 	local r, eno
---~ 	r = lio.write(fd, str)
-	r = lio.writebuf(fd, str)
+	r = lio.write(fd, str)
 	assert(r == #str)
 	assert(util.fget(fname) == str)
 	assert(lio.close(fd))
 	--
 	-- now reopen and read from the file
 	fd2 = assert(lio.open(fname, lio.O_RDONLY))
---~ 	s = assert(lio.read(fd2, 4096))
-	s = assert(lio.readbuf(fd2))
+	s = assert(lio.read(fd2))
 	assert(s == str)
 	assert(lio.close(fd))
 	os.remove(fname)
