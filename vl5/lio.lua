@@ -73,7 +73,7 @@ function lio.open(pathname, flags, mode)
 end
 
 function lio.close(fd)
-	return syscall(nr.close)
+	return syscall(nr.close, fd)
 end
 
 function lio.read(fd, count, buf, buflen)
@@ -102,6 +102,16 @@ function lio.write(fd, s, buf, buflen)
 	return syscall(nr.write, fd, buf, #s)
 end
 
+function lio.dup2(oldfd, newfd)
+	-- return newfd, or nil, errno
+	local r, eno
+	r, eno = syscall(nr.dup2, oldfd, newfd)
+	-- [ may should enclose in a busy loop:
+	-- while eno ~= EBUSY do syscall(...) end
+	-- becuse of a race condition with open()
+	-- See musl src/unistd/dup2.c
+	return r, eno
+end
 
 ------------------------------------------------------------------------
 return lio
