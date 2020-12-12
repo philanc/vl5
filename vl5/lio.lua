@@ -50,7 +50,7 @@ local lio = {	 -- the vl5.lio module.
 	F_GETFL = 0x00000003,
 	F_SETFL = 0x00000004,
 	--
-	}--lio
+	} --lio constants
 ------------------------------------------------------------------------
 
 
@@ -123,9 +123,15 @@ end
 function lio.pipe2(flags)
 	local r, eno = syscall(nr.pipe2, b, flags)
 	if not r then return nil, eno end
-	local intsz = 4
+	local intsz = 4 -- sizeof(int)
 	local p0, p1 = geti(b, intsz), geti(b+intsz, intsz)
 	return p0, p1
+end
+
+function lio.ioctl(fd, cmd, arg)
+	-- `fd`, `cmd`, `arg` are lua integers. 
+	-- arg can be an integer argument or the address of a buffer.
+	return syscall(nr.ioctl, fd, cmd, arg)
 end
 
 ------------------------------------------------------------------------
