@@ -100,6 +100,13 @@ function lio.write(fd, s, buf, buflen)
 	assert(#s <= buflen, "string too large for buffer")
 	puts(b, s)
 	return syscall(nr.write, fd, buf, #s)
+end 
+
+function lio.ftruncate(fd, len)
+	-- truncate file to length `len`. If the file was shorter, 
+	-- it is extended with null bytes.
+	-- return 0 or nil, errno
+	return syscall(nr.ftruncate, fd, len)
 end
 
 function lio.dup2(oldfd, newfd)

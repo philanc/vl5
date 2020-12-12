@@ -28,13 +28,15 @@ local function test_file()
 	assert(util.fget(fname) == str)
 	assert(lio.close(fd))
 	--
-	-- now reopen, dup2 and read from the new fd
-	fd2 = assert(lio.open(fname, lio.O_RDONLY))
+	-- now reopen, dup2, ftruncate and read from the new fd
+	-- open as writable (if readonly, ftruncate fails wih EINVAL)
+	fd2 = assert(lio.open(fname, lio.O_RDWR))
 	fd3 = assert(lio.dup2(fd2, fd2+10)) -- assume fd2+10 does not exist
 	assert(fd3 == fd2+10)
 	assert(lio.close(fd2))
+	assert(lio.ftruncate(fd3, 3)) -- keep only 3 bytes
 	s = assert(lio.read(fd3))
-	assert(s == str)
+	assert(s == str:sub(1,3))
 	assert(lio.close(fd3))
 	os.remove(fname)
 end--test_file
