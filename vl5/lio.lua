@@ -117,6 +117,17 @@ function lio.ftruncate(fd, len)
 	return syscall(nr.ftruncate, fd, len)
 end
 
+function lio.lseek(fd, offset, whence)
+	-- reposition the read/write file offset of open file fd
+	-- whence = 0 (SET) file offset is set to `offset`
+	-- whence = 1 (CUR) file offset is set to current position + `offset`
+	-- whence = 2 (END) file offset is set to end of file + `offset`
+	--                  (allow to create "holes" in file)
+	-- offset defaults to 0
+	-- return the new offset location, or nil, errno
+	return syscall(nr.lseek, fd, offset, whence)
+end
+
 function lio.dup2(oldfd, newfd)
 	-- return newfd, or nil, errno
 	local r, eno

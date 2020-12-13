@@ -16,7 +16,7 @@ local function test_file()
 	-- use open, read, write, close, dup2
 	--
 	local fname = "zzlio"
-	local str = "HELLO"
+	local str = "HELLO WORLD!"
 	local mode = tonumber("600", 8) -- "rw- --- ---"
 	local fd, fd2, fd3, r, eno, s
 	fd = assert(lio.open(fname, lio.O_CREAT | lio.O_RDWR, mode))
@@ -28,15 +28,16 @@ local function test_file()
 	assert(util.fget(fname) == str)
 	assert(lio.close(fd))
 	--
-	-- now reopen, dup2, ftruncate and read from the new fd
+	-- now reopen, dup2, ftruncate, lseek and read from the new fd
 	-- open as writable (if readonly, ftruncate fails wih EINVAL)
 	fd2 = assert(lio.open(fname, lio.O_RDWR))
 	fd3 = assert(lio.dup2(fd2, fd2+10)) -- assume fd2+10 does not exist
 	assert(fd3 == fd2+10)
 	assert(lio.close(fd2))
-	assert(lio.ftruncate(fd3, 3)) -- keep only 3 bytes
-	s = assert(lio.read(fd3))
-	assert(s == str:sub(1,3))
+	assert(lio.ftruncate(fd3, 5)) -- keep only 5 bytes
+	assert(lio.lseek(fd3, 2)) -- set file position before 3rd byte
+	s = assert(lio.read(fd3)) -- read 3 bytes ("LLO")
+	assert(s == str:sub(3,5)) 
 	assert(lio.close(fd3))
 	os.remove(fname)
 end--test_file
