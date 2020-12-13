@@ -61,11 +61,22 @@ local lio = {	 -- the vl5.lio module.
 	} --lio constants
 ------------------------------------------------------------------------
 
-
 function lio.fcntl()
-
+	--see: man 2 fcntl
+	return syscall(nr.fcntl, fd, cmd, arg)
 end
 
+-- two frequent use cases of fcntl are to set the CLOEXEC and NONBLOCK flags
+-- they provided with their own functions below: 
+
+function lio.set_cloexec(fd)
+	local FD_CLOEXEC = 1
+	return lio.fcntl(fd, lio.F_SETFD, FD_CLOEXEC)
+end
+
+function lio.set_nonblock(fd)
+	return lio.fcntl(fd, lio.F_SETFL, lio.O_NONBLOCK)
+end
 
 function lio.open(pathname, flags, mode)
 	puts(b, pathname)
@@ -114,6 +125,9 @@ function lio.ftruncate(fd, len)
 	-- truncate file to length `len`. If the file was shorter, 
 	-- it is extended with null bytes.
 	-- return 0 or nil, errno
+	--
+	-- note: arch=64bits (len is uint64, is passed as one arg)
+	--
 	return syscall(nr.ftruncate, fd, len)
 end
 
@@ -126,6 +140,8 @@ function lio.lseek(fd, offset, whence)
 	-- offset defaults to 0
 	-- whence defaults to 0 (SET)
 	-- return the new offset location, or nil, errno
+	--
+	-- note: arch=64bits (offset is uint64, is passed as one arg)
 	--
 	-- (syscall args default to 0)
 	return syscall(nr.lseek, fd, offset, whence)
