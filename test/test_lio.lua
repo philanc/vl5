@@ -35,7 +35,8 @@ local function test_file()
 	assert(fd3 == fd2+10)
 	assert(lio.close(fd2))
 	assert(lio.ftruncate(fd3, 5)) -- keep only 5 bytes
-	assert(lio.lseek(fd3, 2)) -- set file position before 3rd byte
+	r = assert(lio.lseek(fd3, 2)) -- set file position before 3rd byte
+	assert(r == 2) 
 	s = assert(lio.read(fd3)) -- read 3 bytes ("LLO")
 	assert(s == str:sub(3,5)) 
 	assert(lio.close(fd3))

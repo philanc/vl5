@@ -124,7 +124,10 @@ function lio.lseek(fd, offset, whence)
 	-- whence = 2 (END) file offset is set to end of file + `offset`
 	--                  (allow to create "holes" in file)
 	-- offset defaults to 0
+	-- whence defaults to 0 (SET)
 	-- return the new offset location, or nil, errno
+	--
+	-- (syscall args default to 0)
 	return syscall(nr.lseek, fd, offset, whence)
 end
 
