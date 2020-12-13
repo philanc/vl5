@@ -8,7 +8,14 @@ vl5.lio  -- Linux I/O functions
 files, directories and filesystems-related functions
 
 	open, close, read, write
-	getdents64
+	ftruncate
+	pipe2, dup2
+	ioctl
+	dirmap  --a wrapper around getdents64()
+todo
+	stat, lstat
+	mount, umount
+	
 
 caveats:
 ** this is implemented for and tested only on x86_64. **
@@ -21,6 +28,7 @@ local vl5 = require "vl5"
 local nr = require "vl5.nr"
 
 local gets, puts = vl5.getstr, vl5.putstr
+
 local geti, puti = vl5.getuint, vl5.putuint
 local syscall, errno = vl5.syscall, vl5.errno
 
@@ -132,6 +140,98 @@ function lio.ioctl(fd, cmd, arg)
 	-- `fd`, `cmd`, `arg` are lua integers. 
 	-- arg can be an integer argument or the address of a buffer.
 	return syscall(nr.ioctl, fd, cmd, arg)
+end
+
+------------------------------------------------------------------------
+-- directory functions
+
+local typetbl = { -- directory entry type as a one-char string
+	[1] = "f", 	-- fifo
+	[2] = "c",	-- char device
+	[4] = "d",	-- directory
+	[6] = "b",	-- block device
+	[8] = "r",	-- regular file
+	[10] = "l",	-- symlink
+	[12] = "s",	-- socket
+	-- [14] = "w",  -- whiteout (only bsd? and/or codafs? => ignore it)
+}
+
+local function getdent(a)
+	-- parse a directory entry (returned by getdents64) at address a 
+	-- return 
+	--	the address of the next entry
+	--	entry name, type (as one char), and inode
+	local eino = geti(a, 8) -- inode 
+	--local offset = geti(a+8, 8) -- what is offset? ignore it.
+	local reclen = geti(a+16, 2) -- entry record length
+	local etype = geti(a+18, 1)
+	etype = typetbl[etype] or "u" --(unknown)
+	local ename = gets(a+19)
+	return a + reclen, ename, etype, eino
+end
+
+function lio.dirmap(dirpath, f, t, buf, buflen)
+	-- map function f over all the directory entries
+	-- f signature:  f(t, ename, etype, eino)
+	-- t is intended to be a table to collect results (defaults to {})
+	-- buf, buflen: the buffer used for the system calls
+	-- (defaults to vl5.buf)
+	--
+	t = t or {}
+	buf = buf or b
+	buflen = bulen or blen
+	local fd, r, eno
+	fd, eno = lio.open(dirpath, lio.O_RDONLY | lio.O_DIRECTORY)
+	if not fd then 
+		print(nil, eno, "opendir", '['..dirpath..']')
+		return nil, eno, "opendir" 
+	end
+	while true do
+		r, eno = syscall(nr.getdents64, fd, buf, buflen)
+		if not r then 
+			return nil, eno, "getdents64" 
+		end
+--~ 		print("read", r)
+		eoe = buf + r
+		if r == 0 then break end
+		a = buf
+		local eino, ename, etype -- dir entry values
+		while (a < eoe) do
+			a, ename, etype, eino = getdent(a)
+			f(t, ename, etype, eino)
+		end
+	end
+	lio.close(fd)
+	return t
+end
+
+-- utility functions for dirmap
+local function append_name_type(t, ename, etype, eino)
+	if ename ~= "." and ename ~= ".." then
+		table.insert(t, {ename, etype})
+	end
+	return t
+end
+
+local function append_name(t, ename, etype, eino)
+	if ename ~= "." and ename ~= ".." then
+		table.insert(t, ename)
+	end
+	return t
+end
+
+-- convenience functions to return the content of a directory
+
+function lio.ls(dirpath)
+	-- return a list of the names of entries in the directory
+	-- ('.' and '..' are not included)
+	return lio.dirmap(dirpath, append_name)
+end
+
+function lio.ls2(dirpath)
+	-- return a list of pairs: {{"name1", "type1"}, {"name2", "type2"}...}
+	-- types are one-letter strings, as described above.
+	return lio.dirmap(dirpath, append_name_type)
 end
 
 ------------------------------------------------------------------------

@@ -64,9 +64,37 @@ local function test_pipe()
 	end
 end--test_pipe
 
+--~ require'he.i'
+
+function test_dir()
+	local function find1(t, s)
+		for i,v in ipairs(t) do
+			if v == s then return true end 
+		end
+		return false
+	end
+	local function find2(t, sa, sb)
+		for i,v in ipairs(t) do
+			if (v[1] == sa) and (v[2] == sb) then return true end
+		end
+		return false
+	end
+	--
+	local d = assert(lio.ls("/dev"))
+	assert(find1(d, "bus"))
+	assert(find1(d, "zero"))
+	assert(find1(d, "console"))
+	--
+	local d2 = assert(lio.ls2("/dev"))
+	assert(find2(d2, "bus", "d"))
+	assert(find2(d2, "log", "s"))
+	assert(find2(d2, "stdin", "l"))
+	assert(find2(d2, "zero", "c"))
+end--test_dir
+
 test_file()
 test_pipe()
-
+test_dir()
 
 print("test_lio: ok.")
 

@@ -14,6 +14,10 @@ sizeof(char *) == sizeof(long) == sizeof(lua_Integer) == 8
 
 */
 
+
+#define VL5_VERSION "vl5-0.2"
+
+
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -30,7 +34,6 @@ sizeof(char *) == sizeof(long) == sizeof(lua_Integer) == 8
 #define RET_INT(i) return (lua_pushinteger(L, (i)), 1)
 #define RET_ERRNO return (lua_pushnil(L), lua_pushinteger(L, errno), 2)
 
-#define VL5_VERSION "vl5-0.1"
 
 static int ll_syscall(lua_State *L) {
 	long number = luaL_checkinteger(L, 1);
@@ -93,15 +96,26 @@ static int ll_getstr(lua_State *L) {
 	return 1;
 }
 
-static int ll_putstr(lua_State *L) {
-	// lua API: putstr(addr, str [, nt])
-	// nt is optional. if true, a null terminator ('\0')
-	// is appended at the end of the written string. Default is false.
+static int ll_putbin(lua_State *L) {
+	// lua API: putbin(addr, str)
+	// copy binary string `str` at address `addr`
+	// return addr
 	size_t len;
 	char *ptr = (char *) luaL_checkinteger(L, 1);
 	const char *str = luaL_checklstring(L, 2, &len);
 	memcpy(ptr, str, len);
-	if (lua_toboolean(L, 3)) ptr[len] = '\0';
+	RET_INT( (lua_Integer) ptr );
+}
+
+static int ll_putstr(lua_State *L) {
+	// lua API: putstr(addr, str)
+	// same as putbin, but append a null terminator ('\0') 
+	// at the end of the written string.
+	size_t len;
+	char *ptr = (char *) luaL_checkinteger(L, 1);
+	const char *str = luaL_checklstring(L, 2, &len);
+	memcpy(ptr, str, len);
+	ptr[len] = '\0';
 	RET_INT( (lua_Integer) ptr );
 }
 
@@ -172,6 +186,7 @@ static const struct luaL_Reg vl5lib[] = {
 	{"zero", ll_zero},
 	{"getstr", ll_getstr},
 	{"putstr", ll_putstr},
+	{"putbin", ll_putbin},
 	{"getuint", ll_getuint},
 	{"putuint", ll_putuint},
 	{"errno", ll_errno},
