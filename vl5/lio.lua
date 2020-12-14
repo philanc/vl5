@@ -265,5 +265,116 @@ function lio.ls2(dirpath)
 end
 
 ------------------------------------------------------------------------
+-- stat() functions  -- (for 64-bit arch)
+
+local stat_off = { --field offset in struct stat
+	dev = 0,
+	ino = 8,
+	nlink = 16,
+	mode = 24,
+	uid = 28,
+	gid = 32,
+	rdev = 40,
+	size = 48,
+	blksize = 56,
+	blocks = 64,
+	atime = 72,
+	atime_ns = 80,
+	mtime = 88,
+	mtime_ns = 96,
+	ctime = 104,
+	ctime_ns = 112,
+}
+
+local stat_len = { --field length in struct stat
+	dev = 8,
+	ino = 8,
+	nlink = 8,
+	mode = 4,
+	uid = 4,
+	gid = 4,
+	rdev = 8,
+	size = 8,
+	blksize = 8,
+	blocks = 8,
+	atime = 8,
+	atime_ns = 8,
+	mtime = 8,
+	mtime_ns = 8,
+	ctime = 8,
+	ctime_ns = 8,
+}
+
+local stat_names = {
+	"dev", "ino", "nlink", "mode", "uid", "gid", "rdev", "size", "blksize",
+	"blocks", "atime", "atime_ns", "mtime", "mtime_ns", "ctime", "ctime_ns",
+}
+
+function lio.statbuf(pathname, buf)
+	-- call the system call stat. The struct stat returned by 
+	-- the system call is placed in buffer `buf`
+	buf = buf or vl5.buf
+	return syscall(nr.stat, buf)
+end
+
+function lio.lstatbuf(pathname, buf)
+	-- call the system call lstat. The struct stat returned by 
+	-- the system call is placed in buffer `buf`
+	buf = buf or vl5.buf
+	return syscall(nr.stat, buf)
+end
+
+function lio.stat_get(name, buf)
+	-- return a field of struct stat after a call to lio.statbuf() 
+	-- or lio.lstatbuf()
+	buf = buf or vl5.buf
+	return geti(buf + stat_off[name], stat_len[name])
+end
+
+function lio.stat(pathname, t, buf)
+	-- convenience function. stat is called, the result is returned 
+	-- as a Lua table
+	t = t or {}
+	local r, eno = syscall(nr.stat, buf)
+	if not r then return nil, eno end
+	for name in ipairs(stat_names) do
+		t[name] = geti(buf + stat_off[name], stat_len[name])
+	end
+	return t
+end
+
+function lio.lstat(pathname, t, buf)
+	-- convenience function. stat is called, the result is returned 
+	-- as a Lua table
+	t = t or {}
+	local r, eno = syscall(nr.stat, buf)
+	if not r then return nil, eno end
+	for name in ipairs(stat_names) do
+		t[name] = geti(buf + stat_off[name], stat_len[name])
+	end
+	return t
+end
+
+-- access to the content of the stat/lstat `mode` attribute
+
+function lio.mtype(mode)
+	-- return the file type of a file given its 'mode' attribute
+	-- as a one letter string
+	return typetbl[(mode >> 12) & 0x1f] or "u"
+end
+
+function lio.mperm(mode) 
+	-- get the access permissions of a file given its 'mode' attribute
+	return mode & 0x0fff
+end
+
+function lio.permtos(perm)
+	-- return the octal representation of permissions as a four-digit
+	-- string, eg. "0755", "4755", "0600", etc.	
+	return string.format("%04o", mode & 0x0fff) 
+end
+
+
+------------------------------------------------------------------------
 return lio
 
