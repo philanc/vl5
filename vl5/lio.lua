@@ -368,9 +368,9 @@ function lio.mperm(mode)
 	return mode & 0x0fff
 end
 
-function lio.permtos(perm)
-	-- return the octal representation of permissions as a four-digit
-	-- string, eg. "0755", "4755", "0600", etc.	
+function lio.mpermo(mode)
+	-- same as mperm(), but return the octal representation of 
+	-- permissions as a four-digit string, eg. "0755", "4755", "0600"...	
 	return string.format("%04o", mode & 0x0fff) 
 end
 
