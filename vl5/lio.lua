@@ -314,14 +314,16 @@ function lio.statbuf(pathname, buf)
 	-- call the system call stat. The struct stat returned by 
 	-- the system call is placed in buffer `buf`
 	buf = buf or vl5.buf
-	return syscall(nr.stat, buf)
+	puts(buf + 256, pathname)
+	return syscall(nr.stat, buf+256, buf)
 end
 
 function lio.lstatbuf(pathname, buf)
 	-- call the system call lstat. The struct stat returned by 
 	-- the system call is placed in buffer `buf`
 	buf = buf or vl5.buf
-	return syscall(nr.stat, buf)
+	puts(buf + 256, pathname)
+	return syscall(nr.lstat, buf+256, buf)
 end
 
 function lio.stat_get(name, buf)
@@ -335,9 +337,10 @@ function lio.stat(pathname, t, buf)
 	-- convenience function. stat is called, the result is returned 
 	-- as a Lua table
 	t = t or {}
-	local r, eno = syscall(nr.stat, buf)
+	buf = buf or vl5.buf
+	local r, eno = lio.statbuf(pathname, buf)
 	if not r then return nil, eno end
-	for name in ipairs(stat_names) do
+	for i, name in ipairs(stat_names) do
 		t[name] = geti(buf + stat_off[name], stat_len[name])
 	end
 	return t
@@ -347,9 +350,10 @@ function lio.lstat(pathname, t, buf)
 	-- convenience function. stat is called, the result is returned 
 	-- as a Lua table
 	t = t or {}
-	local r, eno = syscall(nr.stat, buf)
+	buf = buf or vl5.buf
+	local r, eno = lio.lstatbuf(pathname, buf)
 	if not r then return nil, eno end
-	for name in ipairs(stat_names) do
+	for i, name in ipairs(stat_names) do
 		t[name] = geti(buf + stat_off[name], stat_len[name])
 	end
 	return t

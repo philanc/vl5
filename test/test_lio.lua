@@ -9,7 +9,6 @@ local proc = require "vl5.proc"
 ------------------------------------------------------------------------
 
 
-
 ------------------------------------------------------------------------
 
 local function test_file()
@@ -40,6 +39,20 @@ local function test_file()
 	s = assert(lio.read(fd3)) -- read 3 bytes ("LLO")
 	assert(s == str:sub(3,5)) 
 	assert(lio.close(fd3))
+	--
+	-- stat
+	t = {}
+	assert(lio.stat(fname, t) == t)
+	t0 = os.time()
+	assert(math.abs(t.atime - t0) <= 1)
+	assert(math.abs(t.ctime - t0) <= 1)
+	assert(math.abs(t.mtime - t0) <= 1)
+	assert(atime_ns == ctime_ns and atime_ns == mtime_ns)
+	assert(t.nlink == 1)
+	assert(t.size == 5)
+	assert(lio.mtype(t.mode) == "r")
+	assert(lio.mpermo(t.mode) == "0600")
+	
 	os.remove(fname)
 end--test_file
 
@@ -66,7 +79,6 @@ local function test_pipe()
 	end
 end--test_pipe
 
---~ require'he.i'
 
 function test_dir()
 	local function find1(t, s)
@@ -95,8 +107,8 @@ function test_dir()
 end--test_dir
 
 test_file()
-test_pipe()
-test_dir()
+--~ test_pipe()
+--~ test_dir()
 
 print("test_lio: ok.")
 
