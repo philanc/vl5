@@ -156,6 +156,18 @@ function lio.lseek(fd, offset, whence)
 	return syscall(nr.lseek, fd, offset, whence)
 end
 
+function lio.unlink(pathname)
+	local buf = puts(vl5.buf, pathname)
+	return syscall(nr.unlink, buf)
+end
+
+function lio.symlink(target, linkpath)
+	local btarget = vl5.buf
+	local blinkpath = btarget + #target + 1
+	assert(blinkpath + #linkpath + 1 < vl5.buf + vl5.buflen)
+	return syscall(nr.symlink, btarget, blinkpath)
+end
+
 function lio.dup2(oldfd, newfd)
 	-- return newfd, or nil, errno
 	local r, eno
