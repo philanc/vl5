@@ -181,6 +181,44 @@ function lio.ioctl(fd, cmd, arg)
 	return syscall(nr.ioctl, fd, cmd, arg)
 end
 
+function lio.mount(source, target, fstype, flags, data, buf, buflen)
+	-- see `man 2 mount`
+	-- data is an optional, filesystem-specific argument
+	buf = buf or vl5.buf
+	buflen = buflen or vl5.bufsize
+	data = data or ""
+	flags = flags or 0
+	-- 
+	-- copy string args to buffer
+	local bsource = buf   -- buffer addresses for arguments
+	local btarget = bsource + #source + 1
+	local bfstype = btarget + #target + 1
+	local bdata = bsource + #source + 1
+	assert(bdata + #data +1 < buflen, "buffer not large enough")
+	puts(bsource, source)
+	puts(btarget, target)
+	puts(bfstype, fstype)
+	puts(bdata, data)
+	--
+	return syscall(nr.mount, bsource, btarget, bfstype, flags, bdata)
+end
+
+
+function lio.umount(target, flags, buf, buflen)
+	-- wraps umount2 (same as umount + flags)
+	-- see man 2 umount
+	--
+	buf = buf or vl5.buf
+	buflen = buflen or vl5.bufsize
+	assert(#target + 1 < buflen, "buffer not large enough")
+	puts(buf, target)
+	flags = flags or 0 
+	-- with flags=0, umount2 is the same as umount
+	return syscall(nr.umount2, buf, flags)
+end
+
+
+
 ------------------------------------------------------------------------
 -- directory functions
 
