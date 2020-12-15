@@ -67,7 +67,7 @@ end
 
 local function test_csl()
 	-- test make_csl() and parse_csl()
-	local b, blen = vl5.buf, vl5.bufsize
+	local b, blen = vl5.buf, vl5.buflen
 	local sl = {"abc", "", "defg", "", string.rep('A', 1000)}
 	local b1, em = proc.make_csl(b, blen, sl)
 	assert(b1, em)

@@ -16,8 +16,8 @@ local vl5 = require "vl5core"
 
 -- create a default buffer
 if not vl5.buf then
-	vl5.bufsize = 8192
-	vl5.buf = vl5.newbuffer(vl5.bufsize)
+	vl5.buflen = 8192
+	vl5.buf = vl5.newbuffer(vl5.buflen)
 end
 
 

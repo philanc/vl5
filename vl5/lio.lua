@@ -42,7 +42,7 @@ local geti, puti = vl5.getuint, vl5.putuint
 local syscall, errno = vl5.syscall, vl5.errno
 
 -- default memory buffer for syscalls
-local b, blen = vl5.buf, vl5.bufsize
+local b, blen = vl5.buf, vl5.buflen
 
 
 local lio = {	 -- the vl5.lio module. 
@@ -107,10 +107,10 @@ end
 function lio.read(fd, count, buf, buflen)
 	-- read at most `count` bytes from fd, using buffer `buf`
 	-- return read bytes as a string, or nil, errno
-	-- buf, buflen  default to vl5.buf, vl4.bufsize
+	-- buf, buflen  default to vl5.buf, vl5.buflen
 	-- count defaults to buflen
 	buf = buf or vl5.buf
-	buflen = buflen or vl5.bufsize
+	buflen = buflen or vl5.buflen
 	count = count or buflen
 	assert(count <= buflen)
 	local r, eno = syscall(nr.read, fd, buf, count)
@@ -122,9 +122,9 @@ end
 function lio.write(fd, s, buf, buflen)
 	-- write string s to fd, using buffer `buf`
 	-- returns the number of written bytes, or nil, errno
-	-- buf, buflen  default to vl5.buf, vl4.bufsize
+	-- buf, buflen  default to vl5.buf, vl5.buflen
 	buf = buf or vl5.buf
-	buflen = buflen or vl5.bufsize
+	buflen = buflen or vl5.buflen
 	assert(#s <= buflen, "string too large for buffer")
 	puts(b, s)
 	return syscall(nr.write, fd, buf, #s)
@@ -197,7 +197,7 @@ function lio.mount(source, target, fstype, flags, data, buf, buflen)
 	-- see `man 2 mount`
 	-- data is an optional, filesystem-specific argument
 	buf = buf or vl5.buf
-	buflen = buflen or vl5.bufsize
+	buflen = buflen or vl5.buflen
 	data = data or ""
 	flags = flags or 0
 	-- 
@@ -221,7 +221,7 @@ function lio.umount(target, flags, buf, buflen)
 	-- see man 2 umount
 	--
 	buf = buf or vl5.buf
-	buflen = buflen or vl5.bufsize
+	buflen = buflen or vl5.buflen
 	assert(#target + 1 < buflen, "buffer not large enough")
 	puts(buf, target)
 	flags = flags or 0 

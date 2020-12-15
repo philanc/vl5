@@ -37,7 +37,7 @@ local geti, puti = vl5.getuint, vl5.putuint
 local syscall, errno = vl5.syscall, vl5.errno
 
 -- default memory buffer for syscalls
-local b, blen = vl5.buf, vl5.bufsize
+local b, blen = vl5.buf, vl5.buflen
 
 
 local proc = {} -- the vl5.proc module
