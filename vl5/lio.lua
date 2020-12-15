@@ -425,6 +425,21 @@ function lio.mpermo(mode)
 	return string.format("%04o", mode & 0x0fff) 
 end
 
+function lio.mkdir(pathname, mode)
+	-- use the default buffer vl5.buf
+	local buf = vl5.buf
+	puts(buf, pathname)
+	return syscall(nr.mkdir, buf, mode)
+end
+
+function lio.rmdir(pathname)
+	-- use the default buffer vl5.buf
+	local buf = vl5.buf
+	puts(buf, pathname)
+	return syscall(nr.rmdir, buf)
+end
+
+
 
 ------------------------------------------------------------------------
 return lio
