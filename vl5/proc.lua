@@ -3,7 +3,24 @@
 
 --[[   
 
-vl5.proc  
+vl5.proc  - process-related functions
+
+--- system calls
+
+getpid()
+getppid()	
+getcwd()
+chdir()	
+
+kill()
+fork()
+waitpid()
+execve()
+
+--- utilities
+
+msleep()    sleep for x milliseconds (wraps nanosleep())
+		
 
 caveats:
 ** this is implemented for and tested only on x86_64. **

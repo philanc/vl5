@@ -3,19 +3,28 @@
 
 --[[   
 
-vl5.lio  -- Linux I/O functions 
+vl5.lio -- Linux I/O: files, directories and filesystems functions:
 
-files, directories and filesystems-related functions
+--- system calls
 
-	open, close, read, write
-	ftruncate
-	pipe2, dup2
-	ioctl
-	dirmap  --a wrapper around getdents64()
-todo
-	stat, lstat
-	mount, umount
-	
+open, close, read, write
+ftruncate
+pipe2, dup2
+ioctl
+stat, lstat
+
+- todo:
+
+mount, umount
+
+
+--- utilities
+
+dirmap      map a function over the content of a directory
+            (a wrapper around the getdents64() system call)
+
++ various utilities to access content of a directory and stat results
+
 
 caveats:
 ** this is implemented for and tested only on x86_64. **
@@ -347,7 +356,7 @@ function lio.stat(pathname, t, buf)
 end
 
 function lio.lstat(pathname, t, buf)
-	-- convenience function. stat is called, the result is returned 
+	-- convenience function. lstat is called, the result is returned 
 	-- as a Lua table
 	t = t or {}
 	buf = buf or vl5.buf

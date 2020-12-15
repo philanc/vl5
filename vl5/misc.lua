@@ -3,7 +3,22 @@
 
 --[[   
 
-vl5.misc
+vl5.misc  -  misc functions
+
+
+--- System calls
+	
+time()	
+clock_getres()
+clock_gettime()
+uname()
+
+	
+--- Utilities
+
+time_msec()     return the current time in milliseconds
+time_usec()     return the current time in microseconds
+	
 
 caveats:
 ** this is implemented for and tested only on x86_64. **
