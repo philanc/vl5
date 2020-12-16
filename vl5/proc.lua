@@ -147,6 +147,11 @@ function proc.make_csl(a, alen, t)
 	-- store the strings and check the total length of the future csl
 	local pa = a -- address of the pointer to the first string
 	for i, s in ipairs(t) do
+		local ts = type(s)
+		if ts == "string" then --nothing to do
+		elseif ts == "number" then s = tostring(s)
+		else error("make_csl: list element not string or number")
+		end
 		assert(type(s) == "string")
 		sa = a + len -- -- address of the first string chars
 		len = len + #s + 1  -- add 1 for the '\0' terminator
