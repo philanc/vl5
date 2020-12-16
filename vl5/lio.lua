@@ -41,9 +41,6 @@ local gets, puts = vl5.getstr, vl5.putstr
 local geti, puti = vl5.getuint, vl5.putuint
 local syscall, errno = vl5.syscall, vl5.errno
 
--- default memory buffer for syscalls
-local b, blen = vl5.buf, vl5.buflen
-
 
 local lio = {	 -- the vl5.lio module. 
 
@@ -88,8 +85,8 @@ function lio.set_nonblock(fd)
 end
 
 function lio.open(pathname, flags, mode)
-	puts(b, pathname)
-	local fd, eno = syscall(nr.open, b, flags, mode)
+	puts(vl5.buf, pathname)
+	local fd, eno = syscall(nr.open, vl5.buf, flags, mode)
 	if not fd then return nil, eno end
 	-- it appears that CLOEXEC is not set by the open syscall
 	-- cf musl src open.c.  set it with fcntl
@@ -104,29 +101,25 @@ function lio.close(fd)
 	return syscall(nr.close, fd)
 end
 
-function lio.read(fd, count, buf, buflen)
-	-- read at most `count` bytes from fd, using buffer `buf`
+function lio.read(fd, count)
+	-- read at most `count` bytes from fd, using the vl5 buffer
 	-- return read bytes as a string, or nil, errno
-	-- buf, buflen  default to vl5.buf, vl5.buflen
-	-- count defaults to buflen
-	buf = buf or vl5.buf
-	buflen = buflen or vl5.buflen
-	count = count or buflen
-	assert(count <= buflen)
-	local r, eno = syscall(nr.read, fd, buf, count)
+	-- count defaults to vl5.buflen
+	local b, blen = vl5.buf, vl5.buflen
+	count = count or blen
+	assert(count <= vl5.buflen)
+	local r, eno = syscall(nr.read, fd, b, count)
 	if not r then return nil, eno end
-	local s = gets(buf, r)
+	local s = gets(b, r)
 	return s
 end
 
-function lio.write(fd, s, buf, buflen)
-	-- write string s to fd, using buffer `buf`
+function lio.write(fd, s)
+	-- write string s to fd, using vl5 buffer
 	-- returns the number of written bytes, or nil, errno
-	-- buf, buflen  default to vl5.buf, vl5.buflen
-	buf = buf or vl5.buf
-	buflen = buflen or vl5.buflen
+	local buf, buflen = vl5.buf, vl5.buflen
 	assert(#s <= buflen, "string too large for buffer")
-	puts(b, s)
+	puts(buf, s)
 	return syscall(nr.write, fd, buf, #s)
 end 
 
@@ -158,7 +151,7 @@ end
 
 function lio.unlink(pathname)
 	local buf = puts(vl5.buf, pathname)
-	return syscall(nr.unlink, buf)
+	return syscall(nr.unlink, vl5.buf)
 end
 
 function lio.symlink(target, linkpath)
@@ -193,11 +186,10 @@ function lio.ioctl(fd, cmd, arg)
 	return syscall(nr.ioctl, fd, cmd, arg)
 end
 
-function lio.mount(source, target, fstype, flags, data, buf, buflen)
+function lio.mount(source, target, fstype, flags, data)
 	-- see `man 2 mount`
 	-- data is an optional, filesystem-specific argument
-	buf = buf or vl5.buf
-	buflen = buflen or vl5.buflen
+	local buf, buflen = vl5.buf, vl5.buflen
 	data = data or ""
 	flags = flags or 0
 	-- 
@@ -216,12 +208,11 @@ function lio.mount(source, target, fstype, flags, data, buf, buflen)
 end
 
 
-function lio.umount(target, flags, buf, buflen)
+function lio.umount(target, flags)
 	-- wraps umount2 (same as umount + flags)
 	-- see man 2 umount
 	--
-	buf = buf or vl5.buf
-	buflen = buflen or vl5.buflen
+	local buf, buflen = vl5.buf, vl5.buflen
 	assert(#target + 1 < buflen, "buffer not large enough")
 	puts(buf, target)
 	flags = flags or 0 
@@ -259,16 +250,13 @@ local function getdent(a)
 	return a + reclen, ename, etype, eino
 end
 
-function lio.dirmap(dirpath, f, t, buf, buflen)
+function lio.dirmap(dirpath, f, t)
 	-- map function f over all the directory entries
 	-- f signature:  f(t, ename, etype, eino)
 	-- t is intended to be a table to collect results (defaults to {})
-	-- buf, buflen: the buffer used for the system calls
-	-- (defaults to vl5.buf)
 	--
 	t = t or {}
-	buf = buf or b
-	buflen = bulen or blen
+	local buf, buflen = vl5.buf, vl5.buflen
 	local fd, r, eno
 	fd, eno = lio.open(dirpath, lio.O_RDONLY | lio.O_DIRECTORY)
 	if not fd then 
@@ -369,34 +357,34 @@ local stat_names = {
 	"blocks", "atime", "atime_ns", "mtime", "mtime_ns", "ctime", "ctime_ns",
 }
 
-function lio.statbuf(pathname, buf)
+function lio.statbuf(pathname)
 	-- call the system call stat. The struct stat returned by 
 	-- the system call is placed in buffer `buf`
-	buf = buf or vl5.buf
+	local buf, buflen = vl5.buf, vl5.buflen
 	puts(buf + 256, pathname)
 	return syscall(nr.stat, buf+256, buf)
 end
 
-function lio.lstatbuf(pathname, buf)
+function lio.lstatbuf(pathname)
 	-- call the system call lstat. The struct stat returned by 
 	-- the system call is placed in buffer `buf`
-	buf = buf or vl5.buf
+	local buf, buflen = vl5.buf, vl5.buflen
 	puts(buf + 256, pathname)
 	return syscall(nr.lstat, buf+256, buf)
 end
 
-function lio.stat_get(name, buf)
+function lio.stat_get(name)
 	-- return a field of struct stat after a call to lio.statbuf() 
 	-- or lio.lstatbuf()
-	buf = buf or vl5.buf
+	local buf, buflen = vl5.buf, vl5.buflen
 	return geti(buf + stat_off[name], stat_len[name])
 end
 
-function lio.stat(pathname, t, buf)
+function lio.stat(pathname, t)
 	-- convenience function. stat is called, the result is returned 
 	-- as a Lua table
 	t = t or {}
-	buf = buf or vl5.buf
+	local buf, buflen = vl5.buf, vl5.buflen
 	local r, eno = lio.statbuf(pathname, buf)
 	if not r then return nil, eno end
 	for i, name in ipairs(stat_names) do
@@ -405,11 +393,11 @@ function lio.stat(pathname, t, buf)
 	return t
 end
 
-function lio.lstat(pathname, t, buf)
+function lio.lstat(pathname, t)
 	-- convenience function. lstat is called, the result is returned 
 	-- as a Lua table
 	t = t or {}
-	buf = buf or vl5.buf
+	local buf, buflen = vl5.buf, vl5.buflen
 	local r, eno = lio.lstatbuf(pathname, buf)
 	if not r then return nil, eno end
 	for i, name in ipairs(stat_names) do
@@ -438,14 +426,12 @@ function lio.mpermo(mode)
 end
 
 function lio.mkdir(pathname, mode)
-	-- use the default buffer vl5.buf
 	local buf = vl5.buf
 	puts(buf, pathname)
 	return syscall(nr.mkdir, buf, mode)
 end
 
 function lio.rmdir(pathname)
-	-- use the default buffer vl5.buf
 	local buf = vl5.buf
 	puts(buf, pathname)
 	return syscall(nr.rmdir, buf)
