@@ -3,7 +3,7 @@
 
 --[[   
 
-vl5.misc  -  misc functions
+vl5.misc  -  misc functions (mostly time-related)
 
 
 --- System calls
@@ -34,9 +34,6 @@ local gets, puts = vl5.getstr, vl5.putstr
 local geti, puti = vl5.getuint, vl5.putuint
 local syscall, errno = vl5.syscall, vl5.errno
 
--- default memory buffer for syscalls
-local b, blen = vl5.buf, vl5.buflen
-
 
 local misc = {} -- the vl5.misc module
 
@@ -60,18 +57,19 @@ misc.CLOCK_MONOTONIC_RAW = 4
 
 function misc.clock_getres(clockid)
 	-- system call writes a stuct timespec {tv_sec:long, tv_nsec:long}
-	-- in buffer b
-	local r, eno = syscall(nr.clock_getres, clockid, b)
+	-- in buffer
+	local buf = vl5.buf
+	local r, eno = syscall(nr.clock_getres, clockid, buf)
 	if not r then return nil, eno end
-	return geti(b, 8), geti(b+8, 8)
+	return geti(buf, 8), geti(buf+8, 8)
 end
 	
 function misc.clock_gettime(clockid)
 	-- system call writes a stuct timespec {tv_sec:long, tv_nsec:long}
-	-- in buffer b
-	local r, eno = syscall(nr.clock_gettime, clockid, b)
+	local buf = vl5.buf
+	local r, eno = syscall(nr.clock_gettime, clockid, buf)
 	if not r then return nil, eno end
-	return geti(b, 8), geti(b+8, 8)
+	return geti(buf, 8), geti(buf+8, 8)
 end
 
 -- utility functions based on clock_gettime(CLOCK_REALTIME is 0)
@@ -79,18 +77,20 @@ end
 function misc.time_msec()
 	-- same as os.time, but return time in milliseconds
 	-- (number of milliseconds since the Unix epoch)
-	local r, eno = syscall(nr.clock_gettime, 0, b)
+	local buf = vl5.buf
+	local r, eno = syscall(nr.clock_gettime, 0, buf)
 	if not r then return nil, eno end
-	local s, ns = geti(b, 8), geti(b+8, 8)
+	local s, ns = geti(buf, 8), geti(buf+8, 8)
 	return s * 1000 + ns // 1000000
 end
 	
 function misc.time_usec()
 	-- same as os.time, but return time in microseconds
 	-- (number of microseconds since the Unix epoch)
-	local r, eno = syscall(nr.clock_gettime, 0, b)
+	local buf = vl5.buf
+	local r, eno = syscall(nr.clock_gettime, 0, buf)
 	if not r then return nil, eno end
-	local s, ns = geti(b, 8), geti(b+8, 8)
+	local s, ns = geti(buf, 8), geti(buf+8, 8)
 	return s * 1000000 + ns // 1000
 end
 	
@@ -122,12 +122,13 @@ the uname syscall returns system  information  in the following structure
 function misc.uname()
 	-- return a Lua list with fields `sysname` to `machine`
 	--
-	local r, eno = syscall(nr.uname, b)
+	local buf = vl5.buf
+	local r, eno = syscall(nr.uname, buf)
 	-- b contains a struct utsname (see above)
 	if not r then return nil, eno end
 	ul = {}
 	for i = 0, 4 do
-		table.insert(ul, gets(b + 65*i))
+		table.insert(ul, gets(buf + 65*i))
 	end
 	return ul
 end--uname

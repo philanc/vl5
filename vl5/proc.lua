@@ -36,9 +36,6 @@ local gets, puts = vl5.getstr, vl5.putstr
 local geti, puti = vl5.getuint, vl5.putuint
 local syscall, errno = vl5.syscall, vl5.errno
 
--- default memory buffer for syscalls
-local b, blen = vl5.buf, vl5.buflen
-
 
 local proc = {} -- the vl5.proc module
 
@@ -51,13 +48,15 @@ function proc.getppid()
 end
 
 function proc.getcwd()
-	local r, eno = syscall(nr.getcwd, b, blen)
-	if r then return gets(b) else return nil, eno end
+	local buf, buflen = vl5.buf, vl5.buflen
+	local r, eno = syscall(nr.getcwd, buf, buflen)
+	if r then return gets(buf) else return nil, eno end
 end
 
 function proc.chdir(path)
-	puts(b, path, 0)
-	return syscall(nr.chdir, b)
+	local buf = vl5.buf
+	puts(buf, path, 0)
+	return syscall(nr.chdir, buf)
 end
 
 function proc.msleep(ms)
@@ -67,9 +66,10 @@ function proc.msleep(ms)
 	-- argument is a stuct timespec {tv_sec:long, tv_nsec:long}
 	-- Note: the nanosleep optional argument (remaining time in case 
 	-- of interruption) is not used/returned. 
-	puti(b, ms // 1000, 8) -- seconds
-	puti(b+8, (ms % 1000) * 1000000, 8) -- nanoseconds
-	return syscall(nr.nanosleep, b)
+	local buf = vl5.buf
+	puti(buf, ms // 1000, 8) -- seconds
+	puti(buf+8, (ms % 1000) * 1000000, 8) -- nanoseconds
+	return syscall(nr.nanosleep, buf)
 end
 
 function proc.kill(pid, sig)
@@ -101,10 +101,11 @@ function proc.waitpid(pid, opt)
 	--
 	pid = pid or -1
 	opt = opt or 0
-	local pid, status, eno
-	pid, eno = syscall(nr.wait4, pid, b, opt)
+	local status, eno
+	local buf = vl5.buf
+	pid, eno = syscall(nr.wait4, pid, buf, opt)
 	if pid then
-		status = geti(b, 4)
+		status = geti(buf, 4)
 		return pid, status
 	else
 		return nil, eno
@@ -192,7 +193,8 @@ function proc.execve_raw(exepath, argv_addr, env_addr)
 	-- This function does not return on success.
 	-- argv_addr is the address of the argument list (as a csl).
 	-- env_addr is the address of the environment (as a csl)
-	return syscall(nr.execve, puts(b, exepath), argv_addr, env_addr)
+	local buf = vl5.buf
+	return syscall(nr.execve, puts(buf, exepath), argv_addr, env_addr)
 end
 
 function proc.execve(exepath, argv, env)
