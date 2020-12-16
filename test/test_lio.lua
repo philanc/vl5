@@ -50,16 +50,29 @@ local function test_file()
 	assert(atime_ns == ctime_ns and atime_ns == mtime_ns)
 	assert(t.nlink == 1)
 	assert(t.size == 5)
-	assert(lio.mtype(t.mode) == "r")
-	assert(lio.mpermo(t.mode) == "0600")
-	
-	os.remove(fname)
+	assert(t.type == "r")
+	assert(util.n2o(t.perm) == "0600")
+	--
+	-- remove file
+	assert(lio.unlink(fname))
+	-- check that file is no longer there:
+	r, eno = lio.stat(fname); assert(not r and eno == 2) -- 2 = ENOENT 
 end--test_file
+
+local function test_mkdir()
+	local r, eno
+	local dname = "zzdir"
+	local mode = util.o2n"700"
+	assert(lio.mkdir(dname, mode))
+	local t = lio.stat(dname)
+	assert(t.type == "d" and util.n2o(t.perm) == "0700")
+	assert(lio.rmdir(dname))
+end--test_mkdir
 
 local function test_pipe()
 	local r, eno, pid, status
 	local p0, p1 = lio.pipe2() -- should be 3 and 4
-	assert(p0==3 and p1==4, "not 3,4 - any redirection?")
+	assert(p0==3 and p1==4, "fds not 3, 4 - any redirection?")
 	assert(lio.write(p1, "HELLO"))
 	local s = assert(lio.read(p0))
 	assert(s == "HELLO")
@@ -107,8 +120,9 @@ function test_dir()
 end--test_dir
 
 test_file()
---~ test_pipe()
---~ test_dir()
+test_pipe()
+test_dir()
+test_mkdir()
 
 print("test_lio: ok.")
 

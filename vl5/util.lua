@@ -24,6 +24,19 @@ end
 
 function util.repr(x) return string.format('%q', x) end
 
+function util.n2o(n)
+	-- convert a number to its octal representation as a string
+	-- eg.  n2o(8) => "0010"
+	-- useful for eg. file permissions
+	return string.format("%04o", n)
+end
+
+function util.o2n(s)
+	-- convert a number octal string rep to the number
+	-- eg  o2n("010") => 8
+	return tonumber(s, 8)
+end
+
 function util.rpad(s, w, ch) 
 	-- pad s to the right to width w with char ch
 	return (#s < w) and s .. ch:rep(w - #s) or s

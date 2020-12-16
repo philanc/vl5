@@ -173,10 +173,11 @@ function lio.dup2(oldfd, newfd)
 end
 
 function lio.pipe2(flags)
-	local r, eno = syscall(nr.pipe2, b, flags)
+	local buf = vl5.buf
+	local r, eno = syscall(nr.pipe2, buf, flags)
 	if not r then return nil, eno end
 	local intsz = 4 -- sizeof(int)
-	local p0, p1 = geti(b, intsz), geti(b+intsz, intsz)
+	local p0, p1 = geti(buf, intsz), geti(buf+intsz, intsz)
 	return p0, p1
 end
 
@@ -390,6 +391,9 @@ function lio.stat(pathname, t)
 	for i, name in ipairs(stat_names) do
 		t[name] = geti(buf + stat_off[name], stat_len[name])
 	end
+	-- extract type and permissions from `mode` and add them as attributes
+	t.type = lio.modetype(t.mode)
+	t.perm = lio.modeperm(t.mode)
 	return t
 end
 
@@ -408,21 +412,15 @@ end
 
 -- access to the content of the stat/lstat `mode` attribute
 
-function lio.mtype(mode)
+function lio.modetype(mode)
 	-- return the file type of a file given its 'mode' attribute
 	-- as a one letter string
 	return typetbl[(mode >> 12) & 0x1f] or "u"
 end
 
-function lio.mperm(mode) 
+function lio.modeperm(mode) 
 	-- get the access permissions of a file given its 'mode' attribute
 	return mode & 0x0fff
-end
-
-function lio.mpermo(mode)
-	-- same as mperm(), but return the octal representation of 
-	-- permissions as a four-digit string, eg. "0755", "4755", "0600"...	
-	return string.format("%04o", mode & 0x0fff) 
 end
 
 function lio.mkdir(pathname, mode)
