@@ -12,6 +12,9 @@ At the moment, this is tested and should work only for x86_64
 Among other things, it assumes that:
 sizeof(char *) == sizeof(long) == sizeof(lua_Integer) == 8
 
+201223 - added (long) casts to allow x86:
+sizeof(char *) == sizeof(long) == 4 ;  sizeof(lua_Integer) == 8
+
 */
 
 
