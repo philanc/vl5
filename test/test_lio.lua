@@ -8,9 +8,6 @@ local proc = require "vl5.proc"
 
 ------------------------------------------------------------------------
 
-
-------------------------------------------------------------------------
-
 local function test_file()
 	-- use open, read, write, close, dup2
 	--
@@ -95,12 +92,14 @@ end--test_pipe
 
 function test_dir()
 	local function find1(t, s)
+		-- search a string in a list
 		for i,v in ipairs(t) do
 			if v == s then return true end 
 		end
 		return false
 	end
 	local function find2(t, sa, sb)
+		-- search a pair of strings in a list of pairs
 		for i,v in ipairs(t) do
 			if (v[1] == sa) and (v[2] == sb) then return true end
 		end
