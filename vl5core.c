@@ -156,7 +156,8 @@ static int ll_putuint(lua_State *L) {
 	RET_INT( (lua_Integer) (long)p );
 }
 
-// access to  global variables
+// access to  global variables: errno, environ
+//	how could they be found? 
 
 static int ll_errno(lua_State *L) {
 	// lua api: errno() => errno value

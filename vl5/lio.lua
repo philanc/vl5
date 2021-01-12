@@ -12,10 +12,12 @@ ftruncate
 pipe2, dup2
 ioctl
 stat, lstat
+mount, umount
 
 - todo:
 
-mount, umount
+poll
+
 
 
 --- utilities
@@ -360,7 +362,7 @@ local stat_names = {
 
 function lio.statbuf(pathname)
 	-- call the system call stat. The struct stat returned by 
-	-- the system call is placed in buffer `buf`
+	-- the system call is placed in vl5.buf
 	local buf, buflen = vl5.buf, vl5.buflen
 	puts(buf + 256, pathname)
 	return syscall(nr.stat, buf+256, buf)
@@ -368,7 +370,7 @@ end
 
 function lio.lstatbuf(pathname)
 	-- call the system call lstat. The struct stat returned by 
-	-- the system call is placed in buffer `buf`
+	-- the system call is placed in vl5.buf
 	local buf, buflen = vl5.buf, vl5.buflen
 	puts(buf + 256, pathname)
 	return syscall(nr.lstat, buf+256, buf)
